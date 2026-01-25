@@ -1,6 +1,6 @@
 [![](https://img.shields.io/github/release/VitisEK/wu-wind-compass-card/all.svg?style=for-the-badge)](https://github.com/VitisEK/wu-wind-compass-card/releases)
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
-[![](https://img.shields.io/github/license/VitisEK/cop-scop-card?style=for-the-badge)](LICENSE)
+[![](https://img.shields.io/github/license/VitisEK/wu-wind-compass-card?style=for-the-badge)](LICENSE)
 [![](https://img.shields.io/badge/MAINTAINER-%40VitisEK-red?style=for-the-badge)](https://github.com/VitisEK)
 [![](https://img.shields.io/badge/GitHub%20Sponsors-SUPPORT-EA4AAA?style=for-the-badge&logo=githubsponsors&logoColor=white)](https://github.com/sponsors/VitisEK)
 [![](https://img.shields.io/badge/COMMUNITY-FORUM-success?style=for-the-badge)](https://community.home-assistant.io)
