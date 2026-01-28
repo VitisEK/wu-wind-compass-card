@@ -19,7 +19,7 @@ A Lovelace custom card that shows **wind direction** as a **compass with a wedge
 - Center label uses **16-point compass** (localized)
 - Optional wind speed display (unit auto-detected from sensor attribute)
 - Optional smoothing (`smooth_deg`) to reduce jitter
-- Built-in GUI editor (ha-form)
+- Built-in GUI editor (ha-form) with color picker controls
 
 ## Installation
 
@@ -82,6 +82,7 @@ segment_color: "rgba(3, 169, 244, 0.18)"
 outer_stroke: "var(--ha-card-border-color, rgba(127,127,127,0.35))"
 label_color: var(--secondary-text-color)
 center_text_color: var(--primary-text-color)
+speed_color: var(--secondary-text-color)
 ```
 
 ## Configuration
@@ -101,6 +102,7 @@ center_text_color: var(--primary-text-color)
 | `segment_color` | string | `rgba(3, 169, 244, 0.18)` | Segmented band color. |
 | `label_color` | string | theme-based | Label text color. |
 | `center_text_color` | string | theme-based | Center text color. |
+| `speed_color` | string | theme-based | Speed text color. |
 | `wedge_color` | string | theme-based | Wedge fill color. |
 | `font_labels_px` | number | `14` | Label font size. |
 | `font_center_px` | number | `28` | Center label font size. |
@@ -120,6 +122,9 @@ center_text_color: var(--primary-text-color)
 
 ## Changelog
 
+- **v1.5.0**
+  - Added speed text color option (`speed_color`)
+  - Color picker UI in editor for color fields
 - **v1.4.0**
   - Wedge/segment design with transparent empty areas
   - i18n (en, cs)

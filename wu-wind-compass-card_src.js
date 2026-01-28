@@ -1,7 +1,4 @@
 'use strict';
-// wu-wind-compass-card.js – wedge/segment design (transparent white areas) + i18n (en, cs)
-// Place this file in: <config>/www/wu-wind-compass-card.js
-// Add as Lovelace resource: /local/wu-wind-compass-card.js?v=1.3.0, type: module
 
 var DEG2RAD = Math.PI / 180;
 
@@ -29,7 +26,7 @@ class WuWindCompassCard extends HTMLElement {
     this.attachShadow({ mode: 'open' });
   }
 
-  static get version() { return '1.4.0'; }
+  static get version() { return '1.5.0'; }
 
   // Lovelace GUI editor hooks
   static async getConfigElement() {
@@ -60,6 +57,7 @@ class WuWindCompassCard extends HTMLElement {
       segment_color: config.segment_color || 'rgba(3, 169, 244, 0.18)', // light blue, semi-transparent
       label_color: config.label_color || 'var(--secondary-text-color)',
       center_text_color: config.center_text_color || 'var(--primary-text-color)',
+      speed_color: config.speed_color || 'var(--secondary-text-color)',
       wedge_color: config.wedge_color || 'var(--accent-color)',
       wedge_width_deg: Number(config.wedge_width_deg || 22.5),
       smooth_deg: Number(config.smooth_deg || 0),
@@ -165,7 +163,7 @@ class WuWindCompassCard extends HTMLElement {
       .segment { fill: none; stroke: ${this._config.segment_color}; stroke-linecap: round; stroke-width: ${bandWidth}; }
       .labels { fill: ${this._config.label_color}; font-size: ${this._config.font_labels_px}px; font-weight: 600; }
       .centerText { fill: ${this._config.center_text_color}; font-size: ${this._config.font_center_px}px; font-weight: 700; text-anchor: middle; dominant-baseline: middle; }
-      .speed { fill: var(--secondary-text-color); font-size: ${this._config.font_speed_px}px; text-anchor: middle; dominant-baseline: hanging; }
+      .speed { fill: ${this._config.speed_color}; font-size: ${this._config.font_speed_px}px; text-anchor: middle; dominant-baseline: hanging; }
       .wedge { fill: ${this._config.wedge_color}; opacity: 1; }
     `;
 
@@ -352,11 +350,6 @@ class WuWindCompassCardEditor extends HTMLElement {
       { name: 'font_center_px', selector: { number: { min: 16, max: 48, step: 1, mode: 'box' } } },
       { name: 'font_labels_px', selector: { number: { min: 10, max: 30, step: 1, mode: 'box' } } },
       { name: 'font_speed_px', selector: { number: { min: 10, max: 24, step: 1, mode: 'box' } } },
-      { name: 'wedge_color', selector: { text: {} } },
-      { name: 'segment_color', selector: { text: {} } },
-      { name: 'outer_stroke', selector: { text: {} } },
-      { name: 'label_color', selector: { text: {} } },
-      { name: 'center_text_color', selector: { text: {} } },
     ];
   }
 
@@ -368,6 +361,13 @@ class WuWindCompassCardEditor extends HTMLElement {
     style.textContent = `
       :host { display:block; }
       ha-form { padding: 0 6px 6px; }
+      .color-section { padding: 0 6px 10px; }
+      .color-title { font-weight: 600; margin: 6px 0 8px; }
+      .color-row { display: grid; grid-template-columns: 130px 1fr; gap: 8px; align-items: center; margin: 6px 0; }
+      .colorwrap { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+      .colorbox { width: 28px; height: 28px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.2); }
+      .color-text { width: 200px; max-width: 100%; }
+      input[type="color"] { width: 46px; height: 34px; padding: 0; border: none; background: transparent; }
     `;
 
     const form = document.createElement('ha-form');
@@ -384,10 +384,142 @@ class WuWindCompassCardEditor extends HTMLElement {
 
     this.shadowRoot.appendChild(style);
     this.shadowRoot.appendChild(form);
+
+    const colors = this._renderColorSection();
+    if (colors) this.shadowRoot.appendChild(colors);
+  }
+
+  _renderColorSection() {
+    const cfg = this._exportData(this._config);
+    const section = document.createElement('div');
+    section.className = 'color-section';
+
+    const title = document.createElement('div');
+    title.className = 'color-title';
+    title.textContent = 'Barvy';
+    section.appendChild(title);
+
+    const hasHaColorPicker = !!customElements.get('ha-color-picker');
+    const fields = [
+      { key: 'wedge_color', label: 'Směr (šipka)', fallback: '#03a9f4' },
+      { key: 'segment_color', label: 'Segmenty', fallback: '#80d6f7' },
+      { key: 'outer_stroke', label: 'Vnější kruh', fallback: '#9e9e9e' },
+      { key: 'label_color', label: 'Popisky', fallback: '#9e9e9e' },
+      { key: 'center_text_color', label: 'Střed', fallback: '#ffffff' },
+      { key: 'speed_color', label: 'Rychlost', fallback: '#9e9e9e' },
+    ];
+
+    for (const field of fields) {
+      const row = document.createElement('div');
+      row.className = 'color-row';
+
+      const label = document.createElement('div');
+      label.textContent = field.label;
+
+      const applyValue = (value) => {
+        const v = String(value || '');
+        const next = { ...this._config, [field.key]: v };
+        this._config = next;
+        if (this._isHex(v)) {
+          if (hasHaColorPicker) {
+            colorPicker.value = v;
+          } else {
+            colorPicker.value = v;
+          }
+        }
+        textInput.value = v;
+        colorBox.style.background = v || '';
+        this.dispatchEvent(new CustomEvent('config-changed', { detail: { config: next }, bubbles: true, composed: true }));
+      };
+
+      const previewValue = (value) => {
+        const v = String(value || '');
+        if (this._isHex(v)) {
+          colorPicker.value = v;
+        }
+        textInput.value = v;
+        colorBox.style.background = v || '';
+      };
+
+      const colorWrap = document.createElement('div');
+      colorWrap.className = 'colorwrap';
+
+      const colorBox = document.createElement('div');
+      colorBox.className = 'colorbox';
+      colorBox.style.background = cfg[field.key] || '';
+
+      const textInput = document.createElement('ha-textfield');
+      textInput.label = 'barva';
+      textInput.value = cfg[field.key] || '';
+      textInput.className = 'color-text';
+
+      let colorPicker;
+      const hexLike = this._cssColorToHex(cfg[field.key], section) || this._toHexOrFallback(cfg[field.key], field.fallback);
+      if (hasHaColorPicker) {
+        colorPicker = document.createElement('ha-color-picker');
+        colorPicker.value = hexLike;
+        colorPicker.addEventListener('value-changed', (ev) => previewValue(ev.detail?.value || hexLike));
+        colorPicker.addEventListener('change', (ev) => applyValue(ev.detail?.value || colorPicker.value || hexLike));
+      } else {
+        colorPicker = document.createElement('input');
+        colorPicker.type = 'color';
+        colorPicker.value = hexLike;
+        colorPicker.addEventListener('input', (ev) => previewValue(ev.target.value));
+        colorPicker.addEventListener('change', (ev) => applyValue(ev.target.value));
+      }
+
+      textInput.addEventListener('change', (ev) => applyValue(ev.target.value));
+      textInput.addEventListener('input', (ev) => applyValue(ev.target.value));
+
+      row.appendChild(label);
+      const right = document.createElement('div');
+      right.appendChild(colorWrap);
+      colorWrap.appendChild(colorBox);
+      colorWrap.appendChild(colorPicker);
+      colorWrap.appendChild(textInput);
+      row.appendChild(right);
+      section.appendChild(row);
+    }
+
+    return section;
+  }
+
+  _isHex(v) {
+    return typeof v === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v);
+  }
+
+  _cssColorToHex(colorStr, scopeEl) {
+    try {
+      const probe = document.createElement('span');
+      probe.style.position = 'absolute';
+      probe.style.left = '-9999px';
+      probe.style.top = '-9999px';
+      probe.style.opacity = '0';
+      probe.style.color = String(colorStr || '');
+      (scopeEl || this.shadowRoot || document.body).appendChild(probe);
+      const cs = getComputedStyle(probe).color;
+      probe.remove();
+      const m = cs.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+      if (!m) return '';
+      const toHex = (n) => String(Number(n).toString(16)).padStart(2, '0');
+      return `#${toHex(m[1])}${toHex(m[2])}${toHex(m[3])}`;
+    } catch (e) {
+      return '';
+    }
+  }
+
+  _toHexOrFallback(v, fallback) {
+    return this._isHex(v) ? v : fallback;
   }
 
   _exportData(cfg) {
     const out = { ...cfg };
+    if (!out.wedge_color) out.wedge_color = 'var(--accent-color)';
+    if (!out.segment_color) out.segment_color = 'rgba(3, 169, 244, 0.18)';
+    if (!out.outer_stroke) out.outer_stroke = 'var(--ha-card-border-color, rgba(127,127,127,0.35))';
+    if (!out.label_color) out.label_color = 'var(--secondary-text-color)';
+    if (!out.center_text_color) out.center_text_color = 'var(--primary-text-color)';
+    if (!out.speed_color) out.speed_color = 'var(--secondary-text-color)';
     if (!out.language) out.language = 'auto';
     return out;
   }
